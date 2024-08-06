@@ -40,10 +40,47 @@ func main() {
 	bastionSubnet := awsec2.NewSubnet(cdk3TeirStack, jsii.String("BastionSubnet"), &awsec2.SubnetProps{
 		VpcId:            vpc.VpcId(),
 		CidrBlock:        jsii.String("10.0.0.16/28"),
+		AvailabilityZone: jsii.String("ap-northeast-1c"),
+	})
+
+	// private subnets
+	webSubnet1 := awsec2.NewSubnet(cdk3TeirStack, jsii.String("WebSubnet1"), &awsec2.SubnetProps{
+		VpcId:            vpc.VpcId(),
+		CidrBlock:        jsii.String("10.0.0.32/28"),
 		AvailabilityZone: jsii.String("ap-northeast-1a"),
 	})
 
-	fmt.Println(natSubnet, bastionSubnet)
+	webSubnet2 := awsec2.NewSubnet(cdk3TeirStack, jsii.String("WebSubnet2"), &awsec2.SubnetProps{
+		VpcId:            vpc.VpcId(),
+		CidrBlock:        jsii.String("10.0.0.48/28"),
+		AvailabilityZone: jsii.String("ap-northeast-1c"),
+	})
+
+	wasSubnet1 := awsec2.NewSubnet(cdk3TeirStack, jsii.String("WasSubnet1"), &awsec2.SubnetProps{
+		VpcId:            vpc.VpcId(),
+		CidrBlock:        jsii.String("10.0.0.64/28"),
+		AvailabilityZone: jsii.String("ap-northeast-1a"),
+	})
+
+	wasSubnet2 := awsec2.NewSubnet(cdk3TeirStack, jsii.String("WasSubnet2"), &awsec2.SubnetProps{
+		VpcId:            vpc.VpcId(),
+		CidrBlock:        jsii.String("10.0.0.80/28"),
+		AvailabilityZone: jsii.String("ap-northeast-1c"),
+	})
+
+	rdsSubnet1 := awsec2.NewSubnet(cdk3TeirStack, jsii.String("RDSSubnet1"), &awsec2.SubnetProps{
+		VpcId:            vpc.VpcId(),
+		CidrBlock:        jsii.String("10.0.0.96/28"),
+		AvailabilityZone: jsii.String("ap-northeast-1a"),
+	})
+
+	rdsSubnet2 := awsec2.NewSubnet(cdk3TeirStack, jsii.String("RDSSubnet2"), &awsec2.SubnetProps{
+		VpcId:            vpc.VpcId(),
+		CidrBlock:        jsii.String("10.0.0.112/28"),
+		AvailabilityZone: jsii.String("ap-northeast-1c"),
+	})
+
+	fmt.Println(natSubnet, bastionSubnet, webSubnet1, webSubnet2, wasSubnet1, wasSubnet2, rdsSubnet1, rdsSubnet2)
 
 	app.Synth(nil)
 }

@@ -18,11 +18,12 @@ func NewStack(scope constructs.Construct, id string, props *VPCStackProps) awscd
 		sprops = props.StackProps
 	}
 	stack := awscdk.NewStack(scope, &id, &sprops)
+	cidr := "10.0.0.0/24"
 
 	vpc := awsec2.NewVpc(stack, jsii.String("3tier-vpc"),
 		&awsec2.VpcProps{
-			Cidr:   jsii.String("10.0.0.0/24"),
-			MaxAzs: jsii.Number(1),
+			IpAddresses: awsec2.IpAddresses_Cidr(&cidr),
+			MaxAzs:      jsii.Number(1),
 		},
 	)
 

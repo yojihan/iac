@@ -27,7 +27,7 @@ func main() {
 	// vpc
 	vpc := awsec2.NewVpc(cdk3TeirStack, jsii.String("Vpc"), &awsec2.VpcProps{
 		IpAddresses: awsec2.IpAddresses_Cidr(jsii.String("10.0.0.0/24")),
-		MaxAzs:      jsii.Number(2),
+		MaxAzs:      jsii.Number(3),
 	})
 
 	// public subnets

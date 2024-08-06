@@ -1,7 +1,6 @@
 package main
 
 import (
-	"cdk-3-tier-architecture/vpc"
 	"fmt"
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
@@ -18,17 +17,33 @@ func main() {
 
 	app := awscdk.NewApp(nil)
 
-	cdk3TeirStack := awscdk.NewStack(app, jsii.String("Stack"), &awscdk.StackProps{
+	// stack
+	cdk3TeirStack := awscdk.NewStack(app, jsii.String("Cdk3TierStack"), &awscdk.StackProps{
 		Env: &awscdk.Environment{
 			Region: jsii.String("ap-northeast-1"),
 		},
 	})
 
-	vpc1 := vpc.NewVPC(cdk3TeirStack, jsii.String("Vpc"), &awsec2.VpcProps{
+	// vpc
+	vpc := awsec2.NewVpc(cdk3TeirStack, jsii.String("Vpc"), &awsec2.VpcProps{
 		IpAddresses: awsec2.IpAddresses_Cidr(jsii.String("10.0.0.0/24")),
 		MaxAzs:      jsii.Number(2),
 	})
-	fmt.Println(vpc1)
+
+	// public subnets
+	natSubnet := awsec2.NewSubnet(cdk3TeirStack, jsii.String("NATSubnet"), &awsec2.SubnetProps{
+		VpcId:            vpc.VpcId(),
+		CidrBlock:        jsii.String("10.0.0.0/28"),
+		AvailabilityZone: jsii.String("ap-northeast-1a"),
+	})
+
+	bastionSubnet := awsec2.NewSubnet(cdk3TeirStack, jsii.String("BastionSubnet"), &awsec2.SubnetProps{
+		VpcId:            vpc.VpcId(),
+		CidrBlock:        jsii.String("10.0.0.16/28"),
+		AvailabilityZone: jsii.String("ap-northeast-1a"),
+	})
+
+	fmt.Println(natSubnet, bastionSubnet)
 
 	app.Synth(nil)
 }

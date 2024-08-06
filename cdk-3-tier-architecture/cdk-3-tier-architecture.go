@@ -30,18 +30,27 @@ func main() {
 		MaxAzs:      jsii.Number(3),
 	})
 
+	// IGW
+	igw := awsec2.NewCfnInternetGateway(cdk3TierStack, jsii.String("IGW"), &awsec2.CfnInternetGatewayProps{})
+	igwAttach := awsec2.NewCfnVPCGatewayAttachment(cdk3TierStack, jsii.String("IGWAttach"), &awsec2.CfnVPCGatewayAttachmentProps{
+		VpcId:             vpc.VpcId(),
+		InternetGatewayId: igw.AttrInternetGatewayId(),
+	})
+
 	// public subnets
 	natSubnet := awsec2.NewSubnet(cdk3TierStack, jsii.String("NATSubnet"), &awsec2.SubnetProps{
 		VpcId:            vpc.VpcId(),
 		CidrBlock:        jsii.String("10.0.0.0/28"),
 		AvailabilityZone: jsii.String("ap-northeast-1a"),
 	})
+	natSubnet.AddDefaultInternetRoute(igw.AttrInternetGatewayId(), igwAttach)
 
 	bastionSubnet := awsec2.NewSubnet(cdk3TierStack, jsii.String("BastionSubnet"), &awsec2.SubnetProps{
 		VpcId:            vpc.VpcId(),
 		CidrBlock:        jsii.String("10.0.0.16/28"),
 		AvailabilityZone: jsii.String("ap-northeast-1c"),
 	})
+	bastionSubnet.AddDefaultInternetRoute(igw.AttrInternetGatewayId(), igwAttach)
 
 	// private subnets
 	webSubnet1 := awsec2.NewSubnet(cdk3TierStack, jsii.String("WebSubnet1"), &awsec2.SubnetProps{

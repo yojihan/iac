@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsec2"
 	"github.com/aws/jsii-runtime-go"
@@ -30,14 +32,19 @@ func main() {
 
 	// vpc
 	vpc := awsec2.NewVpc(cdk3TierStack, jsii.String("Vpc"), &awsec2.VpcProps{
+		VpcName:     jsii.String("vpc-cdk-3tier"),
 		IpAddresses: awsec2.IpAddresses_Cidr(jsii.String("10.0.0.0/24")),
 		MaxAzs:      jsii.Number(3),
+		SubnetConfiguration: &[]*awsec2.SubnetConfiguration{
+			{Name: jsii.String("public"), SubnetType: awsec2.SubnetType_PUBLIC},
+			{Name: jsii.String("private"), SubnetType: awsec2.SubnetType_PRIVATE_WITH_NAT},
+		},
 	})
-	awscdk.Tags_Of(vpc).Add(jsii.String("Name"), jsii.String("vpc-cdk-3tier"), &awscdk.TagProps{})
 
 	// IGW
-	igw := awsec2.NewCfnInternetGateway(cdk3TierStack, jsii.String("IGW"), &awsec2.CfnInternetGatewayProps{})
-	awscdk.Tags_Of(igw).Add(jsii.String("Name"), jsii.String("igw-cdk-3tier"), &awscdk.TagProps{})
+	igw := awsec2.NewCfnInternetGateway(cdk3TierStack, jsii.String("IGW"), &awsec2.CfnInternetGatewayProps{
+		Tags: &[]*awscdk.CfnTag{{Key: jsii.String("Name"), Value: jsii.String("igw-cdk-3tier")}},
+	})
 
 	awsec2.NewCfnVPCGatewayAttachment(cdk3TierStack, jsii.String("IGWAttach"), &awsec2.CfnVPCGatewayAttachmentProps{
 		VpcId:             vpc.VpcId(),
@@ -47,8 +54,8 @@ func main() {
 	// route table
 	publicRouteTable := awsec2.NewCfnRouteTable(cdk3TierStack, jsii.String("PublicRouteTable"), &awsec2.CfnRouteTableProps{
 		VpcId: vpc.VpcId(),
+		Tags:  &[]*awscdk.CfnTag{{Key: jsii.String("Name"), Value: jsii.String("rtb-public-cdk-3tier")}},
 	})
-	awscdk.Tags_Of(publicRouteTable).Add(jsii.String("Name"), jsii.String("rtb-public-cdk-3tier"), &awscdk.TagProps{})
 
 	awsec2.NewCfnRoute(cdk3TierStack, jsii.String("PublicRouteDefault"), &awsec2.CfnRouteProps{
 		RouteTableId:         publicRouteTable.AttrRouteTableId(),
@@ -58,8 +65,8 @@ func main() {
 
 	privateRouteTable := awsec2.NewCfnRouteTable(cdk3TierStack, jsii.String("PrivateRouteTable"), &awsec2.CfnRouteTableProps{
 		VpcId: vpc.VpcId(),
+		Tags:  &[]*awscdk.CfnTag{{Key: jsii.String("Name"), Value: jsii.String("rtb-private-cdk-3tier")}},
 	})
-	awscdk.Tags_Of(privateRouteTable).Add(jsii.String("Name"), jsii.String("rtb-private-cdk-3tier"), &awscdk.TagProps{})
 
 	// public subnets
 	natSubnet := awsec2.NewSubnet(cdk3TierStack, jsii.String("NATSubnet"), &awsec2.SubnetProps{
@@ -118,6 +125,10 @@ func main() {
 		AvailabilityZone: jsii.String(AZ_AP_NORTHEAST_1C),
 	})
 	awscdk.Tags_Of(rdsSubnet2).Add(jsii.String("Name"), jsii.String("rds2-subnet-cdk-3tier"), &awscdk.TagProps{})
+
+	fmt.Println(
+		privateRouteTable.Node().Id(),
+	)
 
 	app.Synth(nil)
 }

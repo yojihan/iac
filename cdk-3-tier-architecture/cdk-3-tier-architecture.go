@@ -32,10 +32,17 @@ func main() {
 
 	// IGW
 	igw := awsec2.NewCfnInternetGateway(cdk3TierStack, jsii.String("IGW"), &awsec2.CfnInternetGatewayProps{})
-	igwAttach := awsec2.NewCfnVPCGatewayAttachment(cdk3TierStack, jsii.String("IGWAttach"), &awsec2.CfnVPCGatewayAttachmentProps{
+	igwAttatch := awsec2.NewCfnVPCGatewayAttachment(cdk3TierStack, jsii.String("IGWAttach"), &awsec2.CfnVPCGatewayAttachmentProps{
 		VpcId:             vpc.VpcId(),
 		InternetGatewayId: igw.AttrInternetGatewayId(),
 	})
+	fmt.Println(igwAttatch)
+
+	// route table
+	routeTable := awsec2.NewCfnRouteTable(cdk3TierStack, jsii.String("RouteTable"), &awsec2.CfnRouteTableProps{
+		VpcId: vpc.VpcId(),
+	})
+	fmt.Println(routeTable)
 
 	// public subnets
 	natSubnet := awsec2.NewSubnet(cdk3TierStack, jsii.String("NATSubnet"), &awsec2.SubnetProps{
@@ -43,14 +50,12 @@ func main() {
 		CidrBlock:        jsii.String("10.0.0.0/28"),
 		AvailabilityZone: jsii.String("ap-northeast-1a"),
 	})
-	natSubnet.AddDefaultInternetRoute(igw.AttrInternetGatewayId(), igwAttach)
 
 	bastionSubnet := awsec2.NewSubnet(cdk3TierStack, jsii.String("BastionSubnet"), &awsec2.SubnetProps{
 		VpcId:            vpc.VpcId(),
 		CidrBlock:        jsii.String("10.0.0.16/28"),
 		AvailabilityZone: jsii.String("ap-northeast-1c"),
 	})
-	bastionSubnet.AddDefaultInternetRoute(igw.AttrInternetGatewayId(), igwAttach)
 
 	// private subnets
 	webSubnet1 := awsec2.NewSubnet(cdk3TierStack, jsii.String("WebSubnet1"), &awsec2.SubnetProps{

@@ -50,10 +50,6 @@ func main() {
 	})
 	awscdk.Tags_Of(publicRouteTable).Add(jsii.String("Name"), jsii.String("rtb-public-cdk-3tier"), &awscdk.TagProps{})
 
-	awsec2.NewCfnRoute(cdk3TierStack, jsii.String("PublicRouteLocal"), &awsec2.CfnRouteProps{
-		RouteTableId:         publicRouteTable.AttrRouteTableId(),
-		DestinationCidrBlock: jsii.String("10.0.0.0/24"),
-	})
 	awsec2.NewCfnRoute(cdk3TierStack, jsii.String("PublicRouteDefault"), &awsec2.CfnRouteProps{
 		RouteTableId:         publicRouteTable.AttrRouteTableId(),
 		DestinationCidrBlock: jsii.String("0.0.0.0/0"),

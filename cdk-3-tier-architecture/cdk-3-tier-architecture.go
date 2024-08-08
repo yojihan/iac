@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsec2"
 	"github.com/aws/jsii-runtime-go"
@@ -182,12 +180,11 @@ func main() {
 	eip := awsec2.NewCfnEIP(cdk3TierStack, jsii.String("NATElasticIP"), &awsec2.CfnEIPProps{
 		Tags: &[]*awscdk.CfnTag{{Key: jsii.String("Name"), Value: jsii.String("cdk-3-tier-NATGW-EIP")}},
 	})
-	natGateway := awsec2.NewCfnNatGateway(cdk3TierStack, jsii.String("NATGW"), &awsec2.CfnNatGatewayProps{
+	awsec2.NewCfnNatGateway(cdk3TierStack, jsii.String("NATGW"), &awsec2.CfnNatGatewayProps{
 		SubnetId:     natSubnet.AttrSubnetId(),
 		AllocationId: eip.AttrAllocationId(),
 		Tags:         &[]*awscdk.CfnTag{{Key: jsii.String("Name"), Value: jsii.String("cdk-3-tier-NATGW")}},
 	})
-	fmt.Println(natGateway)
 
 	// EC2
 

@@ -10,14 +10,14 @@ import (
 )
 
 const (
-	NAT_SUBNET     = "NAT_SUBNET"
-	BASTION_SUBNET = "BASTION_SUBNET"
-	WEB1_SUBNET    = "WEB1_SUBNET"
-	WEB2_SUBNET    = "WEB2_SUBNET"
-	WAS1_SUBNET    = "WAS1_SUBNET"
-	WAS2_SUBNET    = "WAS2_SUBNET"
-	RDS1_SUBNET    = "RDS1_SUBNET"
-	RDS2_SUBNET    = "RDS2_SUBNET"
+	SUBNET_NAT     = "SUBNET_NAT"
+	SUBNET_BASTION = "SUBNET_BASTION"
+	SUBNET_WEB1    = "SUBNET_WEB1"
+	SUBNET_WEB2    = "SUBNET_WEB2"
+	SUBNET_WAS1    = "SUBNET_WAS1"
+	SUBNET_WAS2    = "SUBNET_WAS2"
+	SUBNET_RDS1    = "SUBNET_RDS1"
+	SUBNET_RDS2    = "SUBNET_RDS2"
 )
 
 type PublicSubnetsMapProps struct {
@@ -54,8 +54,8 @@ func NewPublicSubnetMap(scope constructs.Construct, props *PublicSubnetsMapProps
 	})
 
 	return map[string]*awsec2.CfnSubnet{
-		NAT_SUBNET:     &natSubnet,
-		BASTION_SUBNET: &bastionSubnet,
+		SUBNET_NAT:     &natSubnet,
+		SUBNET_BASTION: &bastionSubnet,
 	}
 }
 
@@ -127,11 +127,11 @@ func NewPrivateSubnetMap(scope constructs.Construct, props *PrivateSubnetsMapPro
 	})
 
 	return map[string]*awsec2.CfnSubnet{
-		WEB1_SUBNET: &webSubnet1,
-		WEB2_SUBNET: &webSubnet2,
-		WAS1_SUBNET: &wasSubnet1,
-		WAS2_SUBNET: &wasSubnet2,
-		RDS1_SUBNET: &rdsSubnet1,
-		RDS2_SUBNET: &rdsSubnet2,
+		SUBNET_WEB1: &webSubnet1,
+		SUBNET_WEB2: &webSubnet2,
+		SUBNET_WAS1: &wasSubnet1,
+		SUBNET_WAS2: &wasSubnet2,
+		SUBNET_RDS1: &rdsSubnet1,
+		SUBNET_RDS2: &rdsSubnet2,
 	}
 }

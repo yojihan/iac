@@ -1,21 +1,13 @@
 package main
 
 import (
+	"cdk-3-tier-architecture/ec2"
 	"cdk-3-tier-architecture/vpc"
 	"fmt"
 	"os"
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
-	"github.com/aws/aws-cdk-go/awscdk/v2/awsec2"
 	"github.com/aws/jsii-runtime-go"
-)
-
-const (
-	REGION_AP_NORTHEAST_1 = "ap-northeast-1"
-	AZ_AP_NORTHEAST_1A    = "ap-northeast-1a"
-	AZ_AP_NORTHEAST_1C    = "ap-northeast-1c"
-
-	EC2_BASTION_AMI = "ami-0091f05e4b8ee6709"
 )
 
 func main() {
@@ -59,48 +51,21 @@ func main() {
 
 	// NAT Gateway
 	vpc.NewNATGateway(cdk3TierStack, &vpc.NatGatewayProps{
-		SubnetId: (*publicSubnetMap[vpc.NAT_SUBNET]).AttrSubnetId(),
+		SubnetId: (*publicSubnetMap[vpc.SUBNET_NAT]).AttrSubnetId(),
 	})
 
 	// Security Groups
-	bastionServerSG := awsec2.NewCfnSecurityGroup(cdk3TierStack, jsii.String("BationServerSecurityGroup"), &awsec2.CfnSecurityGroupProps{
-		Tags:             &[]*awscdk.CfnTag{{Key: jsii.String("Name"), Value: jsii.String("sg-bastion-server")}},
-		VpcId:            (*cdk3TierVPC).AttrVpcId(),
-		GroupDescription: jsii.String("bastion server security group"),
-		SecurityGroupEgress: &[]*awsec2.CfnSecurityGroup_EgressProperty{
-			{
-				IpProtocol:  jsii.String("-1"),
-				CidrIp:      jsii.String("0.0.0.0/0"),
-				FromPort:    jsii.Number(-1),
-				ToPort:      jsii.Number(-1),
-				Description: jsii.String("allow all traffics"),
-			},
-		},
-		SecurityGroupIngress: &[]*awsec2.CfnSecurityGroup_IngressProperty{
-			{
-				IpProtocol:  jsii.String("tcp"),
-				CidrIp:      jsii.String("0.0.0.0/0"),
-				FromPort:    jsii.Number(22),
-				ToPort:      jsii.Number(22),
-				Description: jsii.String("allow SSH access"),
-			},
-		},
+	sgMap := ec2.NewSecurityGroupMap(cdk3TierStack, &ec2.SecurityGroupMapProps{
+		VpcId: (*cdk3TierVPC).AttrVpcId(),
 	})
 
 	// EC2
-	bastionServer := awsec2.NewCfnInstance(cdk3TierStack, jsii.String("BastionServer"), &awsec2.CfnInstanceProps{
-		ImageId:          jsii.String(EC2_BASTION_AMI),
-		InstanceType:     jsii.String("t2.micro"),
-		SecurityGroupIds: &[]*string{bastionServerSG.AttrGroupId()},
-		SubnetId:         (*publicSubnetMap[vpc.BASTION_SUBNET]).AttrSubnetId(),
-		Tags: &[]*awscdk.CfnTag{
-			{
-				Key:   jsii.String("Name"),
-				Value: jsii.String("cdk-3-tier-bastion-server"),
-			},
+	ec2Map := ec2.NewEC2Map(cdk3TierStack, &ec2.EC2MapProps{
+		SecurityGroupIds: &[]*string{
+			(*sgMap[ec2.SG_BASTION_SERVER]).AttrGroupId(),
 		},
 	})
-	fmt.Println(bastionServer)
+	fmt.Println(ec2Map)
 
 	// RDS
 

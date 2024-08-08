@@ -64,6 +64,9 @@ func main() {
 		SecurityGroupIds: &[]*string{
 			(*sgMap[ec2.SG_BASTION_SERVER]).AttrGroupId(),
 		},
+		SubnetIdMap: map[string]*string{
+			ec2.EC2_BASTION: (*publicSubnetMap[vpc.SUBNET_BASTION]).AttrSubnetId(),
+		},
 	})
 	fmt.Println(ec2Map)
 

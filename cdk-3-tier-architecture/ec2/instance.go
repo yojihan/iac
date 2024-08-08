@@ -15,7 +15,7 @@ const (
 
 type EC2MapProps struct {
 	SecurityGroupIds *[]*string
-	SubnetId         *string
+	SubnetIdMap      map[string]*string
 }
 
 func NewEC2Map(scope constructs.Construct, props *EC2MapProps) map[string]*awsec2.CfnInstance {
@@ -23,7 +23,7 @@ func NewEC2Map(scope constructs.Construct, props *EC2MapProps) map[string]*awsec
 		ImageId:          jsii.String(AMI_BASTION),
 		InstanceType:     jsii.String("t2.micro"),
 		SecurityGroupIds: props.SecurityGroupIds,
-		SubnetId:         props.SubnetId,
+		SubnetId:         props.SubnetIdMap[EC2_BASTION],
 		Tags: &[]*awscdk.CfnTag{
 			{
 				Key:   jsii.String("Name"),

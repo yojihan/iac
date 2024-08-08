@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsec2"
 	"github.com/aws/jsii-runtime-go"
@@ -150,6 +152,50 @@ func main() {
 		RouteTableId: privateRouteTable.AttrRouteTableId(),
 		SubnetId:     rdsSubnet2.AttrSubnetId(),
 	})
+
+	// Security Groups
+	awsec2.NewCfnSecurityGroup(cdk3TierStack, jsii.String("BationServerSecurityGroup"), &awsec2.CfnSecurityGroupProps{
+		Tags:             &[]*awscdk.CfnTag{{Key: jsii.String("Name"), Value: jsii.String("sg-bastion-server")}},
+		VpcId:            vpc.AttrVpcId(),
+		GroupDescription: jsii.String("bastion server security group"),
+		SecurityGroupEgress: &[]*awsec2.CfnSecurityGroup_EgressProperty{
+			{
+				IpProtocol:  jsii.String("-1"),
+				CidrIp:      jsii.String("0.0.0.0/0"),
+				FromPort:    jsii.Number(-1),
+				ToPort:      jsii.Number(-1),
+				Description: jsii.String("allow all traffics"),
+			},
+		},
+		SecurityGroupIngress: &[]*awsec2.CfnSecurityGroup_IngressProperty{
+			{
+				IpProtocol:  jsii.String("tcp"),
+				CidrIp:      jsii.String("0.0.0.0/0"),
+				FromPort:    jsii.Number(22),
+				ToPort:      jsii.Number(22),
+				Description: jsii.String("allow SSH access"),
+			},
+		},
+	})
+
+	// NAT Gateway
+	eip := awsec2.NewCfnEIP(cdk3TierStack, jsii.String("NATElasticIP"), &awsec2.CfnEIPProps{
+		Tags: &[]*awscdk.CfnTag{{Key: jsii.String("Name"), Value: jsii.String("cdk-3-tier-NATGW-EIP")}},
+	})
+	natGateway := awsec2.NewCfnNatGateway(cdk3TierStack, jsii.String("NATGW"), &awsec2.CfnNatGatewayProps{
+		SubnetId:     natSubnet.AttrSubnetId(),
+		AllocationId: eip.AttrAllocationId(),
+		Tags:         &[]*awscdk.CfnTag{{Key: jsii.String("Name"), Value: jsii.String("cdk-3-tier-NATGW")}},
+	})
+	fmt.Println(natGateway)
+
+	// EC2
+
+	// RDS
+
+	// ALB
+
+	// NLB
 
 	app.Synth(nil)
 }

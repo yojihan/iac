@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsec2"
 	"github.com/aws/jsii-runtime-go"
@@ -10,6 +13,8 @@ const (
 	REGION_AP_NORTHEAST_1 = "ap-northeast-1"
 	AZ_AP_NORTHEAST_1A    = "ap-northeast-1a"
 	AZ_AP_NORTHEAST_1C    = "ap-northeast-1c"
+
+	EC2_BASTION_AMI = "ami-0091f05e4b8ee6709"
 )
 
 type Cdk3TeirStackProps struct {
@@ -23,9 +28,7 @@ func main() {
 
 	// stack
 	cdk3TierStack := awscdk.NewStack(app, jsii.String("Cdk3TierStack"), &awscdk.StackProps{
-		Env: &awscdk.Environment{
-			Region: jsii.String(REGION_AP_NORTHEAST_1),
-		},
+		Env: env(),
 	})
 
 	// vpc
@@ -152,7 +155,7 @@ func main() {
 	})
 
 	// Security Groups
-	awsec2.NewCfnSecurityGroup(cdk3TierStack, jsii.String("BationServerSecurityGroup"), &awsec2.CfnSecurityGroupProps{
+	bastionServerSG := awsec2.NewCfnSecurityGroup(cdk3TierStack, jsii.String("BationServerSecurityGroup"), &awsec2.CfnSecurityGroupProps{
 		Tags:             &[]*awscdk.CfnTag{{Key: jsii.String("Name"), Value: jsii.String("sg-bastion-server")}},
 		VpcId:            vpc.AttrVpcId(),
 		GroupDescription: jsii.String("bastion server security group"),
@@ -187,6 +190,19 @@ func main() {
 	})
 
 	// EC2
+	bastionServer := awsec2.NewCfnInstance(cdk3TierStack, jsii.String("BastionServer"), &awsec2.CfnInstanceProps{
+		ImageId:          jsii.String(EC2_BASTION_AMI),
+		InstanceType:     jsii.String("t2.micro"),
+		SecurityGroupIds: &[]*string{bastionServerSG.AttrGroupId()},
+		SubnetId:         bastionSubnet.AttrSubnetId(),
+		Tags: &[]*awscdk.CfnTag{
+			{
+				Key:   jsii.String("Name"),
+				Value: jsii.String("cdk-3-tier-bastion-server"),
+			},
+		},
+	})
+	fmt.Println(bastionServer)
 
 	// RDS
 
@@ -195,4 +211,11 @@ func main() {
 	// NLB
 
 	app.Synth(nil)
+}
+
+func env() *awscdk.Environment {
+	return &awscdk.Environment{
+		Account: jsii.String(os.Getenv("CDK_DEFAULT_ACCOUNT")),
+		Region:  jsii.String(os.Getenv("CDK_DEFAULT_REGION")),
+	}
 }

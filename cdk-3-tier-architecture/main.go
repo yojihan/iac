@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cdk-3-tier-architecture/vpc"
 	"fmt"
 	"os"
 
@@ -17,10 +18,6 @@ const (
 	EC2_BASTION_AMI = "ami-0091f05e4b8ee6709"
 )
 
-type Cdk3TeirStackProps struct {
-	awscdk.StackProps
-}
-
 func main() {
 	defer jsii.Close()
 
@@ -32,132 +29,43 @@ func main() {
 	})
 
 	// vpc
-	vpc := awsec2.NewCfnVPC(cdk3TierStack, jsii.String("Vpc"), &awsec2.CfnVPCProps{
-		CidrBlock: jsii.String("10.0.0.0/24"),
-		Tags:      &[]*awscdk.CfnTag{{Key: jsii.String("Name"), Value: jsii.String("cdk-3-tier-vpc")}},
-	})
+	cdk3TierVPC := vpc.NewVPC(cdk3TierStack)
 
 	// IGW
-	igw := awsec2.NewCfnInternetGateway(cdk3TierStack, jsii.String("IGW"), &awsec2.CfnInternetGatewayProps{
-		Tags: &[]*awscdk.CfnTag{{Key: jsii.String("Name"), Value: jsii.String("cdk-3-tier-igw")}},
-	})
-
-	awsec2.NewCfnVPCGatewayAttachment(cdk3TierStack, jsii.String("IGWAttach"), &awsec2.CfnVPCGatewayAttachmentProps{
-		VpcId:             vpc.AttrVpcId(),
-		InternetGatewayId: igw.AttrInternetGatewayId(),
+	igw := vpc.NewInternetGateway(cdk3TierStack, &vpc.InternetGatewayProps{
+		VpcId: (*cdk3TierVPC).AttrVpcId(),
 	})
 
 	// route table
-	publicRouteTable := awsec2.NewCfnRouteTable(cdk3TierStack, jsii.String("PublicRouteTable"), &awsec2.CfnRouteTableProps{
-		VpcId: vpc.AttrVpcId(),
-		Tags:  &[]*awscdk.CfnTag{{Key: jsii.String("Name"), Value: jsii.String("cdk-3-tier-public-rtb")}},
+	publicRouteTable := vpc.NewPublicRouteTable(cdk3TierStack, &vpc.PublicRouteTableProps{
+		VpcId:             (*cdk3TierVPC).AttrVpcId(),
+		InternetGatewayId: (*igw).AttrInternetGatewayId(),
 	})
-
-	awsec2.NewCfnRoute(cdk3TierStack, jsii.String("PublicRouteDefault"), &awsec2.CfnRouteProps{
-		RouteTableId:         publicRouteTable.AttrRouteTableId(),
-		DestinationCidrBlock: jsii.String("0.0.0.0/0"),
-		GatewayId:            igw.AttrInternetGatewayId(),
-	})
-
-	privateRouteTable := awsec2.NewCfnRouteTable(cdk3TierStack, jsii.String("PrivateRouteTable"), &awsec2.CfnRouteTableProps{
-		VpcId: vpc.AttrVpcId(),
-		Tags:  &[]*awscdk.CfnTag{{Key: jsii.String("Name"), Value: jsii.String("cdk-3-tier-private-rtb")}},
+	privateRouteTable := vpc.NewPrivateRouteTable(cdk3TierStack, &vpc.PrivateRouteTableProps{
+		VpcId: (*cdk3TierVPC).AttrVpcId(),
 	})
 
 	// public subnets
-	natSubnet := awsec2.NewCfnSubnet(cdk3TierStack, jsii.String("NATSubnet"), &awsec2.CfnSubnetProps{
-		VpcId:            vpc.AttrVpcId(),
-		CidrBlock:        jsii.String("10.0.0.0/28"),
-		AvailabilityZone: jsii.String(AZ_AP_NORTHEAST_1A),
-		Tags:             &[]*awscdk.CfnTag{{Key: jsii.String("Name"), Value: jsii.String("cdk-3-tier-NAT-subnet")}},
-	})
-	awsec2.NewCfnSubnetRouteTableAssociation(cdk3TierStack, jsii.String("NAT-subnet-public-route-table-association"), &awsec2.CfnSubnetRouteTableAssociationProps{
-		RouteTableId: publicRouteTable.AttrRouteTableId(),
-		SubnetId:     natSubnet.AttrSubnetId(),
-	})
-
-	bastionSubnet := awsec2.NewCfnSubnet(cdk3TierStack, jsii.String("BastionSubnet"), &awsec2.CfnSubnetProps{
-		VpcId:            vpc.AttrVpcId(),
-		CidrBlock:        jsii.String("10.0.0.16/28"),
-		AvailabilityZone: jsii.String(AZ_AP_NORTHEAST_1C),
-		Tags:             &[]*awscdk.CfnTag{{Key: jsii.String("Name"), Value: jsii.String("cdk-3-tier-bastion-subnet")}},
-	})
-	awsec2.NewCfnSubnetRouteTableAssociation(cdk3TierStack, jsii.String("bastion-subnet-public-route-table-association"), &awsec2.CfnSubnetRouteTableAssociationProps{
-		RouteTableId: publicRouteTable.AttrRouteTableId(),
-		SubnetId:     bastionSubnet.AttrSubnetId(),
+	publicSubnetMap := vpc.NewPublicSubnetMap(cdk3TierStack, &vpc.PublicSubnetsMapProps{
+		VpcID:        (*cdk3TierVPC).AttrVpcId(),
+		RouteTableId: (*publicRouteTable).AttrRouteTableId(),
 	})
 
 	// private subnets
-	webSubnet1 := awsec2.NewCfnSubnet(cdk3TierStack, jsii.String("WebSubnet1"), &awsec2.CfnSubnetProps{
-		VpcId:            vpc.AttrVpcId(),
-		CidrBlock:        jsii.String("10.0.0.32/28"),
-		AvailabilityZone: jsii.String(AZ_AP_NORTHEAST_1A),
-		Tags:             &[]*awscdk.CfnTag{{Key: jsii.String("Name"), Value: jsii.String("cdk-3-tier-web1-subnet")}},
-	})
-	awsec2.NewCfnSubnetRouteTableAssociation(cdk3TierStack, jsii.String("web1-subnet-private-route-table-association"), &awsec2.CfnSubnetRouteTableAssociationProps{
-		RouteTableId: privateRouteTable.AttrRouteTableId(),
-		SubnetId:     webSubnet1.AttrSubnetId(),
+	vpc.NewPrivateSubnetMap(cdk3TierStack, &vpc.PrivateSubnetsMapProps{
+		VpcID:        (*cdk3TierVPC).AttrVpcId(),
+		RouteTableId: (*privateRouteTable).AttrRouteTableId(),
 	})
 
-	webSubnet2 := awsec2.NewCfnSubnet(cdk3TierStack, jsii.String("WebSubnet2"), &awsec2.CfnSubnetProps{
-		VpcId:            vpc.AttrVpcId(),
-		CidrBlock:        jsii.String("10.0.0.48/28"),
-		AvailabilityZone: jsii.String(AZ_AP_NORTHEAST_1C),
-		Tags:             &[]*awscdk.CfnTag{{Key: jsii.String("Name"), Value: jsii.String("cdk-3-tier-web2-subnet")}},
-	})
-	awsec2.NewCfnSubnetRouteTableAssociation(cdk3TierStack, jsii.String("web2-subnet-private-route-table-association"), &awsec2.CfnSubnetRouteTableAssociationProps{
-		RouteTableId: privateRouteTable.AttrRouteTableId(),
-		SubnetId:     webSubnet2.AttrSubnetId(),
-	})
-
-	wasSubnet1 := awsec2.NewCfnSubnet(cdk3TierStack, jsii.String("WasSubnet1"), &awsec2.CfnSubnetProps{
-		VpcId:            vpc.AttrVpcId(),
-		CidrBlock:        jsii.String("10.0.0.64/28"),
-		AvailabilityZone: jsii.String(AZ_AP_NORTHEAST_1A),
-		Tags:             &[]*awscdk.CfnTag{{Key: jsii.String("Name"), Value: jsii.String("cdk-3-tier-was1-subnet")}},
-	})
-	awsec2.NewCfnSubnetRouteTableAssociation(cdk3TierStack, jsii.String("was1-subnet-private-route-table-association"), &awsec2.CfnSubnetRouteTableAssociationProps{
-		RouteTableId: privateRouteTable.AttrRouteTableId(),
-		SubnetId:     wasSubnet1.AttrSubnetId(),
-	})
-
-	wasSubnet2 := awsec2.NewCfnSubnet(cdk3TierStack, jsii.String("WasSubnet2"), &awsec2.CfnSubnetProps{
-		VpcId:            vpc.AttrVpcId(),
-		CidrBlock:        jsii.String("10.0.0.80/28"),
-		AvailabilityZone: jsii.String(AZ_AP_NORTHEAST_1C),
-		Tags:             &[]*awscdk.CfnTag{{Key: jsii.String("Name"), Value: jsii.String("cdk-3-tier-was2-subnet")}},
-	})
-	awsec2.NewCfnSubnetRouteTableAssociation(cdk3TierStack, jsii.String("was2-subnet-private-route-table-association"), &awsec2.CfnSubnetRouteTableAssociationProps{
-		RouteTableId: privateRouteTable.AttrRouteTableId(),
-		SubnetId:     wasSubnet2.AttrSubnetId(),
-	})
-
-	rdsSubnet1 := awsec2.NewCfnSubnet(cdk3TierStack, jsii.String("RDSSubnet1"), &awsec2.CfnSubnetProps{
-		VpcId:            vpc.AttrVpcId(),
-		CidrBlock:        jsii.String("10.0.0.96/28"),
-		AvailabilityZone: jsii.String(AZ_AP_NORTHEAST_1A),
-		Tags:             &[]*awscdk.CfnTag{{Key: jsii.String("Name"), Value: jsii.String("cdk-3-tier-rds1-subnet")}},
-	})
-	awsec2.NewCfnSubnetRouteTableAssociation(cdk3TierStack, jsii.String("rds1-subnet-private-route-table-association"), &awsec2.CfnSubnetRouteTableAssociationProps{
-		RouteTableId: privateRouteTable.AttrRouteTableId(),
-		SubnetId:     rdsSubnet1.AttrSubnetId(),
-	})
-
-	rdsSubnet2 := awsec2.NewCfnSubnet(cdk3TierStack, jsii.String("RDSSubnet2"), &awsec2.CfnSubnetProps{
-		VpcId:            vpc.AttrVpcId(),
-		CidrBlock:        jsii.String("10.0.0.112/28"),
-		AvailabilityZone: jsii.String(AZ_AP_NORTHEAST_1C),
-		Tags:             &[]*awscdk.CfnTag{{Key: jsii.String("Name"), Value: jsii.String("cdk-3-tier-rds2-subnet")}},
-	})
-	awsec2.NewCfnSubnetRouteTableAssociation(cdk3TierStack, jsii.String("rds2-subnet-private-route-table-association"), &awsec2.CfnSubnetRouteTableAssociationProps{
-		RouteTableId: privateRouteTable.AttrRouteTableId(),
-		SubnetId:     rdsSubnet2.AttrSubnetId(),
+	// NAT Gateway
+	vpc.NewNATGateway(cdk3TierStack, &vpc.NatGatewayProps{
+		SubnetId: (*publicSubnetMap[vpc.NAT_SUBNET]).AttrSubnetId(),
 	})
 
 	// Security Groups
 	bastionServerSG := awsec2.NewCfnSecurityGroup(cdk3TierStack, jsii.String("BationServerSecurityGroup"), &awsec2.CfnSecurityGroupProps{
 		Tags:             &[]*awscdk.CfnTag{{Key: jsii.String("Name"), Value: jsii.String("sg-bastion-server")}},
-		VpcId:            vpc.AttrVpcId(),
+		VpcId:            (*cdk3TierVPC).AttrVpcId(),
 		GroupDescription: jsii.String("bastion server security group"),
 		SecurityGroupEgress: &[]*awsec2.CfnSecurityGroup_EgressProperty{
 			{
@@ -179,22 +87,12 @@ func main() {
 		},
 	})
 
-	// NAT Gateway
-	eip := awsec2.NewCfnEIP(cdk3TierStack, jsii.String("NATElasticIP"), &awsec2.CfnEIPProps{
-		Tags: &[]*awscdk.CfnTag{{Key: jsii.String("Name"), Value: jsii.String("cdk-3-tier-NATGW-EIP")}},
-	})
-	awsec2.NewCfnNatGateway(cdk3TierStack, jsii.String("NATGW"), &awsec2.CfnNatGatewayProps{
-		SubnetId:     natSubnet.AttrSubnetId(),
-		AllocationId: eip.AttrAllocationId(),
-		Tags:         &[]*awscdk.CfnTag{{Key: jsii.String("Name"), Value: jsii.String("cdk-3-tier-NATGW")}},
-	})
-
 	// EC2
 	bastionServer := awsec2.NewCfnInstance(cdk3TierStack, jsii.String("BastionServer"), &awsec2.CfnInstanceProps{
 		ImageId:          jsii.String(EC2_BASTION_AMI),
 		InstanceType:     jsii.String("t2.micro"),
 		SecurityGroupIds: &[]*string{bastionServerSG.AttrGroupId()},
-		SubnetId:         bastionSubnet.AttrSubnetId(),
+		SubnetId:         (*publicSubnetMap[vpc.BASTION_SUBNET]).AttrSubnetId(),
 		Tags: &[]*awscdk.CfnTag{
 			{
 				Key:   jsii.String("Name"),
